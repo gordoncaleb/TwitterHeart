@@ -30,26 +30,27 @@ public class TwitterFeed implements StatusListener {
 
 	public TwitterFeed() {
 
-		// ConfigurationBuilder cb = new ConfigurationBuilder();
+		ConfigurationBuilder cb = new ConfigurationBuilder();
+
+		cb.setDebugEnabled(true).setOAuthConsumerKey("8NGsgoyJZtP2iwm6sE2Dxg").setOAuthConsumerSecret("hvfM705RQFxYSUfz8oDXwbMnEpAa4Zm6ZKT80ezY")
+				.setOAuthAccessToken("53223146-NOVMbadRu7kVdFj5UcoyYijfSZNldKiDhglICxxKs").setOAuthAccessTokenSecret("7vQtsegtERMWU01SLRn9JKPrPZaqo1dGBPwLVEys");
+
+		twitterStream = new TwitterStreamFactory(cb.build()).getInstance();
+		// twitterStream.setOAuthConsumer("8NGsgoyJZtP2iwm6sE2Dxg",
+		// "hvfM705RQFxYSUfz8oDXwbMnEpAa4Zm6ZKT80ezY");
+
+		// try {
+		// RequestToken requestToken = twitterStream.getOAuthRequestToken();
 		//
-		// cb.setDebugEnabled(true).setOAuthConsumerKey("8NGsgoyJZtP2iwm6sE2Dxg").setOAuthConsumerSecret("hvfM705RQFxYSUfz8oDXwbMnEpAa4Zm6ZKT80ezY")
-		// .setOAuthAccessToken("53223146-NOVMbadRu7kVdFj5UcoyYijfSZNldKiDhglICxxKs").setOAuthAccessTokenSecret("7vQtsegtERMWU01SLRn9JKPrPZaqo1dGBPwLVEys");
-
-		twitterStream = new TwitterStreamFactory().getInstance();
-		twitterStream.setOAuthConsumer("8NGsgoyJZtP2iwm6sE2Dxg", "hvfM705RQFxYSUfz8oDXwbMnEpAa4Zm6ZKT80ezY");
-
-		try {
-			RequestToken requestToken = twitterStream.getOAuthRequestToken();
-
-			AccessToken accessToken = null;
-			
-			System.out.println(requestToken.getAuthorizationURL());
-			
-			
-
-		} catch (TwitterException e) {
-			e.printStackTrace();
-		}
+		// AccessToken accessToken = null;
+		//
+		// System.out.println(requestToken.getAuthorizationURL());
+		//
+		//
+		//
+		// } catch (TwitterException e) {
+		// e.printStackTrace();
+		// }
 
 		twitterStream.addListener(this);
 
@@ -75,13 +76,14 @@ public class TwitterFeed implements StatusListener {
 		new TwitterFeed();
 	}
 
-	public String getNewTweet() {
+	public synchronized String getNewTweet() {
 
 		if (!feedBuffer.isEmpty()) {
 
 			String newTweet = feedBuffer.elementAt(0);
 			feedBuffer.removeElementAt(0);
 
+			System.out.println("Poping tweet :" + newTweet);
 			return newTweet;
 		} else {
 			return null;
