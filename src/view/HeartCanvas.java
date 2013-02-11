@@ -10,6 +10,8 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
@@ -24,46 +26,70 @@ import javax.swing.Timer;
 
 import model.TwitterFeed;
 
-public class HeartCanvas extends JLabel implements ActionListener {
+public class HeartCanvas extends JLabel implements ActionListener, ComponentListener {
+
+	public static int vShift = 50;
 
 	public ArrayList<FeedBanner> banners = new ArrayList<FeedBanner>();
 
 	public BufferedImage decalImage;
 	public TwitterFeed tf;
 
+	public BufferedImage resizedDecalImage;
+
 	public Color heartColor;
 
-	public int width;
-	public int height;
+	public int[] yPos;
 
 	private Timer timer;
+
+	private long time;
+	private int frames;
+
+	private Timer fpsCounter;
 
 	public HeartCanvas() {
 
 		tf = new TwitterFeed();
 
-		decalImage = getImage("heartdecal.png", 500, 500);
+		decalImage = getImage("heartdecal.png", 0, 0);
 
-		width = decalImage.getWidth();
-		height = decalImage.getHeight();
+		resizedDecalImage = resize(decalImage, 500, 500);
 
-		System.out.println("Image Size =" + width + "," + height);
+		this.setPreferredSize(new Dimension(resizedDecalImage.getWidth(), resizedDecalImage.getHeight()));
 
-		this.setPreferredSize(new Dimension(width, height));
+		double h = 32;
 
-		int h = 18;
+		ArrayList<Integer> rowHeights = new ArrayList<Integer>();
 
-		int numRows = (int) ((double) height / (double) h);
+		int sum = 0;
+		int rh;
+		while (sum < (resizedDecalImage.getHeight() - vShift)) {
+			rh = (int) Math.max(16, Math.random() * h);
+			sum += rh;
+			rowHeights.add(rh);
+		}
 
+		int numRows = rowHeights.size();
+		yPos = new int[numRows];
+
+		int y = vShift;
 		for (int i = 0; i < numRows; i++) {
-			banners.add(new FeedBanner(tf, h, 1));
+			y += rowHeights.get(i);
+			banners.add(new FeedBanner(tf, rowHeights.get(i), (float) Math.max(Math.random() / 2.0, .2)));
+			yPos[i] = y;
 		}
 
 		Color baseColor = Color.RED;
 		heartColor = new Color(baseColor.getRed() / 255.0f, baseColor.getGreen() / 255.0f, baseColor.getBlue() / 255.0f, 0.5f);
 
-		timer = new Timer(10, this);
+		this.addComponentListener(this);
+
+		timer = new Timer(1, this);
 		timer.start();
+
+		fpsCounter = new Timer(1000, this);
+		fpsCounter.start();
 
 	}
 
@@ -120,42 +146,62 @@ public class HeartCanvas extends JLabel implements ActionListener {
 
 		frame.setVisible(true);
 
-		frame.setResizable(false);
+		// frame.setResizable(false);
 
 	}
 
 	public void paintComponent(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
 
-		int yPos = 0;
-		for (FeedBanner banner : banners) {
-			yPos += banner.getH();
-			banner.drawBanner(g2, yPos, width);
+		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+		// g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+		// RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+		g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+		g2.setColor(Color.BLACK);
+
+		int[] rand = randomOrder(yPos.length);
+		FeedBanner banner;
+
+		for (int i = 0; i < yPos.length; i++) {
+			banner = banners.get(rand[i]);
+			banner.drawBanner(g2, yPos[rand[i]], this.getWidth());
 		}
 
 		g2.setColor(heartColor);
-		g2.fillRect(0, 0, width, height);
+		g2.fillRect(0, 0, this.getWidth(), this.getHeight());
 
 		if (decalImage != null) {
-			g2.drawImage(decalImage, 0, 0, null);
+			int xoff = (int) (((double) this.getWidth() / 2.0) - ((double) resizedDecalImage.getWidth() / 2.0));
+			int yoff = (int) (((double) this.getHeight() / 2.0) - ((double) resizedDecalImage.getHeight() / 2.0));
+
+			g2.drawImage(resizedDecalImage, xoff, yoff, null);
+
+			g2.setColor(Color.WHITE);
+			g2.fillRect(0, 0, xoff, this.getHeight());
+			g2.fillRect(xoff + resizedDecalImage.getWidth(), 0, this.getWidth() - (xoff + resizedDecalImage.getWidth()), this.getHeight());
 		}
 	}
 
-	private void paintTweet(Graphics2D g2, int[] rowPix, int rowHeight, String tweet, int tweetLength) {
+	public int[] randomOrder(int max) {
 
-		int lengthDrawn = rowPix[1];
+		ArrayList<Integer> ordered = new ArrayList<Integer>();
 
-		while ((tweetLength - lengthDrawn) >= 0) {
-			g2.drawString(tweet, -lengthDrawn, rowHeight * (rowPix[0] + 1));
-
-			lengthDrawn += width;
-
-			if (tweetLength >= lengthDrawn) {
-				rowPix[0]++;
-			}
+		for (int i = 0; i < max; i++) {
+			ordered.add(i);
 		}
 
-		rowPix[1] = -(width - (lengthDrawn - tweetLength));
+		int[] rand = new int[max];
+
+		int sel;
+		for (int i = 0; i < max; i++) {
+			sel = (int) (Math.random() * (double) ordered.size());
+			rand[i] = ordered.get(sel);
+			ordered.remove(sel);
+		}
+
+		return rand;
 
 	}
 
@@ -206,7 +252,72 @@ public class HeartCanvas extends JLabel implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
 
-		this.repaint();
+		if (arg0.getSource() == timer) {
+			this.repaint();
+			frames++;
+		}
+
+		if (arg0.getSource() == fpsCounter) {
+
+			System.out.println(1000 * ((double) frames / ((double) System.currentTimeMillis() - (double) time)) + "fps");
+
+			frames = 0;
+			time = System.currentTimeMillis();
+		}
+	}
+
+	@Override
+	public void componentHidden(ComponentEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void componentMoved(ComponentEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void componentResized(ComponentEvent arg0) {
+		resizedDecalImage = resize(decalImage, this.getHeight(), this.getHeight());
+
+		double h = this.getHeight() * 0.08;
+		ArrayList<Integer> rowHeights = new ArrayList<Integer>();
+
+		int sum = 0;
+		int rh;
+		while (sum < (resizedDecalImage.getHeight() - vShift)) {
+			rh = (int) Math.max(16, Math.random() * h);
+			sum += rh;
+			rowHeights.add(rh);
+		}
+
+		int numRows = rowHeights.size();
+		yPos = new int[numRows];
+
+		int y = vShift;
+		for (int i = 0; i < numRows; i++) {
+			y += rowHeights.get(i);
+
+			if (i < banners.size()) {
+				banners.get(i).setH(rowHeights.get(i));
+			} else {
+				banners.add(new FeedBanner(tf, rowHeights.get(i), (float) Math.max(Math.random() / 2.0, .2)));
+			}
+
+			yPos[i] = y;
+		}
+
+		for (FeedBanner banner : banners) {
+			banner.setSpeed((float) Math.max(Math.random() * 0.001 * (double) this.getWidth(), (double) this.getWidth() * 0.0004));
+		}
+	}
+
+	@Override
+	public void componentShown(ComponentEvent arg0) {
+		// TODO Auto-generated method stub
+
 	}
 
 }

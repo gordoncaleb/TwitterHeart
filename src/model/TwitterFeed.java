@@ -26,14 +26,20 @@ public class TwitterFeed implements StatusListener {
 	Vector<String> feedBuffer = new Vector<String>();
 	int bufferSize = 50;
 
+	Vector<String> usedCache = new Vector<String>();
+	int cachedSize = 50;
+
 	TwitterStream twitterStream;
+
+	String[] tags = new String[] { "#love", "#heart", "#amor", "#teamo", "jet'aime", "#valentine", "#girlfriend", "#boyfriend" };
 
 	public TwitterFeed() {
 
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 
 		cb.setDebugEnabled(true).setOAuthConsumerKey("8NGsgoyJZtP2iwm6sE2Dxg").setOAuthConsumerSecret("hvfM705RQFxYSUfz8oDXwbMnEpAa4Zm6ZKT80ezY")
-				.setOAuthAccessToken("53223146-NOVMbadRu7kVdFj5UcoyYijfSZNldKiDhglICxxKs").setOAuthAccessTokenSecret("7vQtsegtERMWU01SLRn9JKPrPZaqo1dGBPwLVEys");
+				.setOAuthAccessToken("53223146-NOVMbadRu7kVdFj5UcoyYijfSZNldKiDhglICxxKs")
+				.setOAuthAccessTokenSecret("7vQtsegtERMWU01SLRn9JKPrPZaqo1dGBPwLVEys");
 
 		twitterStream = new TwitterStreamFactory(cb.build()).getInstance();
 		// twitterStream.setOAuthConsumer("8NGsgoyJZtP2iwm6sE2Dxg",
@@ -56,7 +62,7 @@ public class TwitterFeed implements StatusListener {
 
 		FilterQuery query = new FilterQuery();
 
-		query.track(new String[] { "#love", "#heart" });
+		query.track(tags);
 
 		twitterStream.filter(query);
 		// twitterStream.sample();
@@ -78,15 +84,39 @@ public class TwitterFeed implements StatusListener {
 
 	public synchronized String getNewTweet() {
 
+		String newTweet;
+
 		if (!feedBuffer.isEmpty()) {
 
-			String newTweet = feedBuffer.elementAt(0);
+			newTweet = feedBuffer.elementAt(0);
 			feedBuffer.removeElementAt(0);
 
-			System.out.println("Poping tweet :" + newTweet);
+			if (usedCache.isEmpty()) {
+				usedCache.add(newTweet);
+			} else {
+				usedCache.add(newTweet);
+
+				if (usedCache.size() >= cachedSize) {
+					usedCache.remove(0);
+				}
+			}
+
+			// System.out.println("Poping tweet :" + newTweet);
 			return newTweet;
 		} else {
-			return null;
+			if (!usedCache.isEmpty()) {
+				newTweet = usedCache.elementAt(0);
+
+				if (usedCache.size() > 1) {
+					usedCache.remove(0);
+					usedCache.add(newTweet);
+				}
+
+				return newTweet;
+			} else {
+
+				return null;
+			}
 		}
 
 	}
@@ -190,8 +220,13 @@ public class TwitterFeed implements StatusListener {
 
 		if (feedBuffer.size() < bufferSize) {
 			synchronized (this) {
-				feedBuffer.addElement(cleanTweet(status.getText()));
-				System.out.println("Buffering: " + status.getText());
+				String cleanedTweet = cleanTweet(status.getText());
+
+				if (!cleanedTweet.isEmpty()) {
+					feedBuffer.addElement(cleanedTweet + " | ");
+					//System.out.println("Buffered " + feedBuffer.size() + " tweets");
+				}
+				//System.out.println("Buffering: " + status.getText());
 			}
 		}
 
@@ -203,19 +238,40 @@ public class TwitterFeed implements StatusListener {
 
 	}
 
+	public boolean validTag(String tag) {
+		for (String t : tags) {
+			if (t.equalsIgnoreCase(tag)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public String cleanTweet(String dirtyTweet) {
+
+		// eliminate retweets
+		if (dirtyTweet.trim().toLowerCase().startsWith("rt") || dirtyTweet.toLowerCase().contains("follow")) {
+			return "";
+		}
 
 		StringBuilder sb = new StringBuilder();
 
 		String[] tokens = dirtyTweet.split(" ");
 
+		boolean invalid = false;
+
 		for (String token : tokens) {
-			if (!token.startsWith("#") && !token.startsWith("http") && !token.startsWith("@")) {
+
+			invalid |= token.startsWith("#") && !validTag(token);
+			invalid |= token.startsWith("http");
+			invalid |= token.startsWith("@");
+
+			if (!invalid) {
 				sb.append(token.trim() + " ");
 			}
 		}
 
 		return sb.toString();
 	}
-
 }

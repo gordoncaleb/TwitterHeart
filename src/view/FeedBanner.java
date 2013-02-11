@@ -3,29 +3,34 @@ package view;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.util.ArrayList;
 
 import model.TwitterFeed;
 
 public class FeedBanner {
 
-	private Font tweetFont = new Font("Monospaced", Font.BOLD, 18);
+	private Font tweetFont;
 
 	private ArrayList<String> tweets = new ArrayList<String>();
 
 	private TwitterFeed tf;
 
-	private double leftOffset = 0;
+	private float leftOffset = 0;
+
+	private long lastPaint;
 
 	private int h;
-	private double speed;
+	private float speed;
 
-	public FeedBanner(TwitterFeed tf, int h, double speed) {
+	public FeedBanner(TwitterFeed tf, int h, float speed) {
 		this.h = h;
 		this.tf = tf;
 		this.speed = speed;
 
-		tweetFont = new Font("Monospaced", Font.BOLD, h);
+		int[] styles = new int[] { Font.BOLD, Font.ITALIC, Font.PLAIN };
+
+		tweetFont = new Font("Monospaced", styles[(int) (Math.random() * 3)], h);
 	}
 
 	public void drawBanner(Graphics2D g2, int yPos, int width) {
@@ -50,28 +55,48 @@ public class FeedBanner {
 					bannerLength += fm.stringWidth(newTweet);
 				}
 			}
+
+			t++;
 		}
 
-		int pos = (int) -leftOffset;
+		float pos = -leftOffset;
 		for (String tweet : tweets) {
-			g2.drawString(tweet, pos, yPos);
+
+			// System.out.println("drawing \"" + tweet + "\" at pos= " + pos +
+			// " yPos= " + yPos);
+			g2.drawString(tweet, pos, (float) yPos);
 			pos += fm.stringWidth(tweet);
 		}
 
-		leftOffset += speed;
+		leftOffset += speed; //* 1000.0 / (System.currentTimeMillis() - lastPaint);
 
 		if (!tweets.isEmpty()) {
 			String headTweet = tweets.get(0);
 			if (leftOffset >= fm.stringWidth(headTweet)) {
 				tweets.remove(0);
+				leftOffset = 0;
 			}
 
+		} else {
+			leftOffset = ((float) width) / 2.0f;
 		}
+
+		lastPaint = System.currentTimeMillis();
 
 	}
 
 	public int getH() {
 		return h;
+	}
+
+	public void setH(int h) {
+		this.h = h;
+
+		tweetFont = new Font("Monospaced", tweetFont.getStyle(), h);
+	}
+
+	public void setSpeed(float speed) {
+		this.speed = speed;
 	}
 
 }
