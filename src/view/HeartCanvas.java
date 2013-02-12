@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -37,6 +38,8 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 	public TwitterFeed tf;
 
 	public BufferedImage resizedDecalImage;
+
+	public BufferedImage textImage;
 
 	public Color heartColor;
 
@@ -89,15 +92,17 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 
 		this.addComponentListener(this);
 
+		textImage = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_4BYTE_ABGR);
+
 		anamationThread = new Thread(this);
 
 		anamationThread.start();
 
-		// timer = new Timer(1, this);
-		// timer.start();
-		//
-		// fpsCounter = new Timer(1000, this);
-		// fpsCounter.start();
+		timer = new Timer(10, this);
+		timer.start();
+
+		fpsCounter = new Timer(1000, this);
+		fpsCounter.start();
 
 	}
 
@@ -150,7 +155,12 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 
 		// frame.pack();
 
-		frame.setSize(500, 500);
+		
+		frame.setUndecorated(true);
+		
+		//frame.setSize(500, 500);
+		
+		frame.setExtendedState(Frame.MAXIMIZED_BOTH); 
 
 		frame.setVisible(true);
 
@@ -161,31 +171,38 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 	public void paintComponent(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
 
-		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
 		// g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-		// RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-		g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+		// RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		//
+		// // g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+		// // RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+		// g2.setRenderingHint(RenderingHints.KEY_RENDERING,
+		// RenderingHints.VALUE_RENDER_QUALITY);
 
-		g2.setColor(Color.WHITE);
-		g2.fillRect(0, 0, this.getWidth(), this.getHeight());
+		// g2.setColor(Color.WHITE);
+		// g2.fillRect(0, 0, this.getWidth(), this.getHeight());
 
-		g2.setColor(Color.RED);
+		// g2.setColor(Color.RED);
 
-		int[] rand = randomOrder(yPos.length);
-		FeedBanner banner;
+		// int[] rand = randomOrder(yPos.length);
+		// FeedBanner banner;
+		//
+		// for (int i = 0; i < yPos.length; i++) {
+		// banner = banners.get(rand[i]);
+		// banner.drawOnCanvas(g2, yPos[rand[i]]);
+		// }
 
-		for (int i = 0; i < yPos.length; i++) {
-			banner = banners.get(rand[i]);
-			banner.drawOnCanvas(g2, yPos[rand[i]]);
+		int xoff = (int) (((double) this.getWidth() / 2.0) - ((double) resizedDecalImage.getWidth() / 2.0));
+		int yoff = (int) (((double) this.getHeight() / 2.0) - ((double) resizedDecalImage.getHeight() / 2.0));
+
+		synchronized (textImage) {
+			g2.drawImage(textImage, xoff, yoff, null);
 		}
 
 		// g2.setColor(heartColor);
 		// g2.fillRect(0, 0, this.getWidth(), this.getHeight());
 
 		if (decalImage != null) {
-			int xoff = (int) (((double) this.getWidth() / 2.0) - ((double) resizedDecalImage.getWidth() / 2.0));
-			int yoff = (int) (((double) this.getHeight() / 2.0) - ((double) resizedDecalImage.getHeight() / 2.0));
 
 			g2.drawImage(resizedDecalImage, xoff, yoff, null);
 
@@ -300,16 +317,17 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 
 		int sum = 0;
 		int rh;
-		while (sum < (resizedDecalImage.getHeight() - vShift)) {
-			rh = (int) Math.max(16, Math.random() * h);
+		while (sum < (resizedDecalImage.getHeight() - vShift * 2)) {
+			rh = (int) Math.max(22, Math.random() * h);
 			sum += rh;
 			rowHeights.add(rh);
 		}
 
 		int numRows = rowHeights.size();
-		yPos = new int[numRows];
 
 		synchronized (banners) {
+
+			yPos = new int[numRows];
 			int y = vShift;
 			for (int i = 0; i < numRows; i++) {
 				y += rowHeights.get(i);
@@ -317,7 +335,7 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 				if (i < banners.size()) {
 					banners.get(i).setWH(this.getWidth(), rowHeights.get(i));
 				} else {
-					banners.add(new FeedBanner(tf, rowHeights.get(i), this.getWidth(), (float) Math.max(Math.random() / 2.0, .2)));
+					banners.add(new FeedBanner(tf, rowHeights.get(i), resizedDecalImage.getWidth(), (float) Math.max(Math.random() / 2.0, .2)));
 				}
 
 				yPos[i] = y;
@@ -326,6 +344,10 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 
 		for (FeedBanner banner : banners) {
 			banner.setSpeed((float) Math.max(Math.random() * 0.001 * (double) this.getWidth(), (double) this.getWidth() * 0.0004));
+		}
+
+		synchronized (textImage) {
+			textImage = new BufferedImage(resizedDecalImage.getWidth(), resizedDecalImage.getHeight(), BufferedImage.TYPE_4BYTE_ABGR);
 		}
 	}
 
@@ -340,19 +362,37 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 
 		while (true) {
 
-			synchronized (banners) {
-				for (FeedBanner banner : banners) {
-					banner.renderLine();
-				}
-			}
+			synchronized (textImage) {
 
-			this.repaint();
+				Graphics2D g2 = textImage.createGraphics();
+
+				g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+				g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+				// clear old image
+				g2.setColor(Color.white);
+				g2.fillRect(0, 0, textImage.getWidth(), textImage.getHeight());
+
+				synchronized (banners) {
+					int[] rand = randomOrder(yPos.length);
+					FeedBanner banner;
+
+					for (int i = 0; i < yPos.length; i++) {
+						banner = banners.get(rand[i]);
+						banner.drawOnCanvas(g2, yPos[rand[i]]);
+					}
+				}
+
+				g2.dispose();
+
+			}
 
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+
 		}
 
 	}

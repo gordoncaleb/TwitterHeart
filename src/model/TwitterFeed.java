@@ -228,7 +228,7 @@ public class TwitterFeed implements StatusListener {
 					// System.out.println("Buffered " + feedBuffer.size() +
 					// " tweets");
 				}
-				 System.out.println("Buffering: " + status.getText());
+				 //System.out.println("Buffering: " + status.getText());
 			}
 		}
 
