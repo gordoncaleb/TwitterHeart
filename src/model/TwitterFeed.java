@@ -31,7 +31,8 @@ public class TwitterFeed implements StatusListener {
 
 	TwitterStream twitterStream;
 
-	String[] tags = new String[] { "#love", "#heart", "#amor", "#teamo", "jet'aime", "#valentine", "#girlfriend", "#boyfriend" };
+	String[] tags = new String[] { "#love", "#heart", "#amor", "#teamo", "#jet'aime", "#jetaime", "#valentine", "#girlfriend", "#boyfriend", "#wife",
+			"#husband", "#propose", "#married" };
 
 	public TwitterFeed() {
 
@@ -224,9 +225,10 @@ public class TwitterFeed implements StatusListener {
 
 				if (!cleanedTweet.isEmpty()) {
 					feedBuffer.addElement(cleanedTweet + " | ");
-					//System.out.println("Buffered " + feedBuffer.size() + " tweets");
+					// System.out.println("Buffered " + feedBuffer.size() +
+					// " tweets");
 				}
-				//System.out.println("Buffering: " + status.getText());
+				 System.out.println("Buffering: " + status.getText());
 			}
 		}
 
