@@ -46,11 +46,13 @@ public class FeedBanner {
 		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 
 		// --- Get an array of font names (smaller than the number of fonts)
-		 String[] fontNames = ge.getAvailableFontFamilyNames();
+		String[] fontNames = ge.getAvailableFontFamilyNames();
 
-		//String[] fontNames = new String[] { "Arial Black", "SansSerif", "Monospaced" };
+		// String[] fontNames = new String[] { "Arial Black", "SansSerif",
+		// "Monospaced" };
 
-		String fontName = fontNames[(int) (Math.random() * fontNames.length)];
+		String fontName = "Monospaced";// fontNames[(int) (Math.random() *
+										// fontNames.length)];
 
 		int style = styles[(int) (Math.random() * 3)];
 
@@ -64,6 +66,14 @@ public class FeedBanner {
 
 		int x = 0;
 
+		while (fm.getHeight() <= h) {
+			x++;
+			tweetFont = new Font(fontName, style, h + x);
+			fm = g2.getFontMetrics(tweetFont);
+		}
+
+		x = 0;
+
 		while (fm.getHeight() > h) {
 			x++;
 			tweetFont = new Font(fontName, style, h - x);
@@ -75,7 +85,7 @@ public class FeedBanner {
 	public void drawOnCanvas(Graphics2D g2, int yPos) {
 
 		// g2.setColor(Color.WHITE);
-		//g2.clearRect(0, 9, w, h);
+		// g2.clearRect(0, 9, w, h);
 
 		g2.setColor(Color.BLACK);
 		g2.setFont(tweetFont);

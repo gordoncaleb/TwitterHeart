@@ -15,8 +15,8 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 
 public class HeartCanvasFX extends Pane {
-	private final AnimationTimer timer;
-	private final Canvas canvas;
+	// private final AnimationTimer timer;
+	// private final Canvas canvas;
 	private final ImageView background;
 	private final Image decalImage;
 
@@ -32,7 +32,7 @@ public class HeartCanvasFX extends Pane {
 
 		// create canvas
 
-		canvas = new Canvas(500, 500);
+		// canvas = new Canvas(500, 500);
 
 		// canvas.setBlendMode(BlendMode.ADD);
 
@@ -42,36 +42,38 @@ public class HeartCanvasFX extends Pane {
 
 		background = new ImageView(decalImage);
 
-		getChildren().addAll(canvas, background);
-
 		// create animation timer that will be called every frame
 
 		// final AnimationTimer timer = new AnimationTimer() {
 
+		getChildren().add(background);
+		
 		initBanners();
 
-		timer = new AnimationTimer() {
+		//getChildren().add(background);
 
-			@Override
-			public void handle(long now) {
-
-				GraphicsContext gc = canvas.getGraphicsContext2D();
-
-				// clear area with transparent black
-
-				gc.setFill(Color.WHITE);
-
-				gc.fillRect(0, 0, canvas.getWidth(), canvas.getWidth());
-
-				// draw fireworks
-
-				// drawFireworks(gc);
-
-				drawBanners(gc);
-
-			}
-
-		};
+		// timer = new AnimationTimer() {
+		//
+		// @Override
+		// public void handle(long now) {
+		//
+		// GraphicsContext gc = canvas.getGraphicsContext2D();
+		//
+		// // clear area with transparent black
+		//
+		// gc.setFill(Color.WHITE);
+		//
+		// gc.fillRect(0, 0, canvas.getWidth(), canvas.getWidth());
+		//
+		// // draw fireworks
+		//
+		// // drawFireworks(gc);
+		//
+		// drawBanners(gc);
+		//
+		// }
+		//
+		// };
 
 	}
 
@@ -96,47 +98,45 @@ public class HeartCanvasFX extends Pane {
 
 	}
 
-	public void drawBanners(GraphicsContext gc) {
-
-		int[] rand = randomOrder(yPos.length);
-		FeedBannerFX banner;
-
-		for (int i = 0; i < yPos.length; i++) {
-			banner = banners.get(rand[i]);
-			banner.drawOnCanvas(gc, yPos[rand[i]]);
-		}
-	}
+	// public void drawBanners(GraphicsContext gc) {
+	//
+	// int[] rand = randomOrder(yPos.length);
+	// FeedBannerFX banner;
+	//
+	// for (int i = 0; i < yPos.length; i++) {
+	// banner = banners.get(rand[i]);
+	// banner.drawOnCanvas(gc, yPos[rand[i]]);
+	// }
+	// }
 
 	public void initBanners() {
-		double h = 32;
+//		double h = 32;
+//
+//		ArrayList<Integer> rowHeights = new ArrayList<Integer>();
+//
+//		int sum = 0;
+//		int rh;
+//		while (sum < (decalImage.getHeight() - vShift)) {
+//			rh = (int) Math.max(16, Math.random() * h);
+//			sum += rh;
+//			rowHeights.add(rh);
+//		}
+//
+//		int numRows = rowHeights.size();
+//		yPos = new int[numRows];
+//
+//		int y = vShift;
+//		for (int i = 0; i < numRows; i++) {
+//			y += rowHeights.get(i);
+//			banners.add(new FeedBannerFX(tf, (double) rowHeights.get(i), (double) decalImage.getWidth(), y, Math.max(Math.random() * 100, 20)));
+//			yPos[i] = y;
+//		}
+		
+		banners.add(new FeedBannerFX(tf, 20, (double) decalImage.getWidth(), decalImage.getHeight()/2.0, 20));
 
-		ArrayList<Integer> rowHeights = new ArrayList<Integer>();
-
-		int sum = 0;
-		int rh;
-		while (sum < (decalImage.getHeight() - vShift)) {
-			rh = (int) Math.max(16, Math.random() * h);
-			sum += rh;
-			rowHeights.add(rh);
+		for (FeedBannerFX banner : banners) {
+			this.getChildren().add(banner);
 		}
-
-		int numRows = rowHeights.size();
-		yPos = new int[numRows];
-
-		int y = vShift;
-		for (int i = 0; i < numRows; i++) {
-			y += rowHeights.get(i);
-			banners.add(new FeedBannerFX(tf, rowHeights.get(i), (int) decalImage.getWidth(), (float) Math.max(Math.random() / 2.0, .2)));
-			yPos[i] = y;
-		}
-	}
-
-	public void start() {
-		timer.start();
-	}
-
-	public void stop() {
-		timer.stop();
 	}
 
 }

@@ -22,8 +22,6 @@ public class TwitterHeartFXApplication extends Application {
 		root.getChildren().add(heartCanvas);
 		
 		primaryStage.show();
-		
-		heartCanvas.start();
 	}
 
 }
