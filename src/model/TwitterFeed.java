@@ -31,16 +31,15 @@ public class TwitterFeed implements StatusListener {
 
 	TwitterStream twitterStream;
 
-	String[] tags = new String[] { "#love", "#heart", "#amor", "#teamo", "#jet'aime", "#jetaime", "#valentine", "#girlfriend", "#boyfriend", "#wife",
-			"#husband", "#propose", "#married" };
+	String[] tags = new String[] { "#love", "#heart", "#amor", "#teamo", "#jet'aime", "#jetaime", "#valentine", "#girlfriend", "#boyfriend", "#wife", "#husband", "#propose",
+			"#married" };
 
 	public TwitterFeed() {
 
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 
 		cb.setDebugEnabled(true).setOAuthConsumerKey("8NGsgoyJZtP2iwm6sE2Dxg").setOAuthConsumerSecret("hvfM705RQFxYSUfz8oDXwbMnEpAa4Zm6ZKT80ezY")
-				.setOAuthAccessToken("53223146-NOVMbadRu7kVdFj5UcoyYijfSZNldKiDhglICxxKs")
-				.setOAuthAccessTokenSecret("7vQtsegtERMWU01SLRn9JKPrPZaqo1dGBPwLVEys");
+				.setOAuthAccessToken("53223146-NOVMbadRu7kVdFj5UcoyYijfSZNldKiDhglICxxKs").setOAuthAccessTokenSecret("7vQtsegtERMWU01SLRn9JKPrPZaqo1dGBPwLVEys");
 
 		twitterStream = new TwitterStreamFactory(cb.build()).getInstance();
 		// twitterStream.setOAuthConsumer("8NGsgoyJZtP2iwm6sE2Dxg",
@@ -77,6 +76,31 @@ public class TwitterFeed implements StatusListener {
 		// }
 		//
 
+	}
+
+	public String getKeyWords() {
+		StringBuilder concat = new StringBuilder();
+
+		for (String word : tags) {
+			concat.append(word + " ");
+		}
+
+		return concat.toString();
+	}
+
+	public void setKeywords(String words) {
+		String[] tokens = words.split(" ");
+
+		tags = tokens;
+
+		FilterQuery query = new FilterQuery();
+
+		query.track(tokens);
+
+		twitterStream.filter(query);
+
+		usedCache.clear();
+		feedBuffer.clear();
 	}
 
 	public static void main(String[] args) {
@@ -228,7 +252,7 @@ public class TwitterFeed implements StatusListener {
 					// System.out.println("Buffered " + feedBuffer.size() +
 					// " tweets");
 				}
-				 //System.out.println("Buffering: " + status.getText());
+				System.out.println("Buffering: " + status.getText());
 			}
 		}
 

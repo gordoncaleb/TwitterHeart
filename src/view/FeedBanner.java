@@ -3,7 +3,6 @@ package view;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
@@ -21,13 +20,13 @@ public class FeedBanner {
 
 	private float leftOffset = 0;
 
-	private int imgNum = 0;
-
 	private long lastPaint;
 
 	private int h;
 	private int w;
 	private float speed;
+
+	private float speedMult = 1;
 
 	public FeedBanner(TwitterFeed tf, int h, int w, float speed) {
 		this.h = h;
@@ -43,10 +42,11 @@ public class FeedBanner {
 
 		int[] styles = new int[] { Font.BOLD, Font.ITALIC, Font.BOLD | Font.ITALIC };
 		// Font info is obtained from the current graphics environment.
-		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+		// GraphicsEnvironment ge =
+		// GraphicsEnvironment.getLocalGraphicsEnvironment();
 
 		// --- Get an array of font names (smaller than the number of fonts)
-		String[] fontNames = ge.getAvailableFontFamilyNames();
+		// String[] fontNames = ge.getAvailableFontFamilyNames();
 
 		// String[] fontNames = new String[] { "Arial Black", "SansSerif",
 		// "Monospaced" };
@@ -82,7 +82,7 @@ public class FeedBanner {
 
 	}
 
-	public void drawOnCanvas(Graphics2D g2, int yPos) {
+	public double drawOnCanvas(Graphics2D g2, int yPos) {
 
 		// g2.setColor(Color.WHITE);
 		// g2.clearRect(0, 9, w, h);
@@ -91,6 +91,8 @@ public class FeedBanner {
 		g2.setFont(tweetFont);
 
 		FontMetrics fm = g2.getFontMetrics();
+
+		int fh = fm.getHeight();
 
 		int bannerLength = (int) -leftOffset;
 
@@ -118,12 +120,11 @@ public class FeedBanner {
 			// System.out.println("drawing \"" + tweet + "\" at pos= " + pos
 			// +
 			// " yPos= " + yPos);
-			g2.drawString(tweet, pos, yPos);
+			g2.drawString(tweet, pos, yPos + fh);
 			pos += fm.stringWidth(tweet);
 		}
 
-		leftOffset += speed; // * 1000.0 / (System.currentTimeMillis() -
-								// lastPaint);
+		leftOffset += speed * speedMult * (System.currentTimeMillis() - lastPaint) / 1000.0;
 
 		if (!tweets.isEmpty()) {
 			String headTweet = tweets.get(0);
@@ -135,6 +136,10 @@ public class FeedBanner {
 		} else {
 			leftOffset = ((float) w) / 2.0f;
 		}
+
+		lastPaint = System.currentTimeMillis();
+
+		return fh;
 
 	}
 
@@ -148,6 +153,34 @@ public class FeedBanner {
 		selectFont();
 	}
 
+	public void setH(int h) {
+		this.h = h;
+
+		BufferedImage img = new BufferedImage(100, 100, BufferedImage.TYPE_4BYTE_ABGR);
+		Graphics2D g2 = img.createGraphics();
+		FontMetrics fm = g2.getFontMetrics(tweetFont);
+
+		int style = tweetFont.getStyle();
+		String name = "Monospaced";
+		tweetFont = new Font(name, style, h);
+
+		int x = 0;
+
+		while (fm.getHeight() <= h) {
+			x++;
+			tweetFont = new Font(name, style, h + x);
+			fm = g2.getFontMetrics(tweetFont);
+		}
+
+		x = 0;
+
+		while (fm.getHeight() > h) {
+			x++;
+			tweetFont = new Font(name, style, h - x);
+			fm = g2.getFontMetrics(tweetFont);
+		}
+	}
+
 	public int getW() {
 		return w;
 	}
@@ -155,5 +188,35 @@ public class FeedBanner {
 	public void setSpeed(float speed) {
 		this.speed = speed;
 	}
+
+	public float getSpeed() {
+		return speed;
+	}
+
+	public void setFontStyle(int style) {
+		tweetFont = new Font(tweetFont.getFontName(), style, tweetFont.getSize());
+	}
+
+	public int getFontStyle() {
+		return tweetFont.getStyle();
+	}
+
+	public void setFontName(String fontName) {
+		tweetFont = new Font(fontName, tweetFont.getStyle(), tweetFont.getSize());
+	}
+
+	public String getFontName() {
+		return tweetFont.getFontName();
+	}
+
+	public float getSpeedMult() {
+		return speedMult;
+	}
+
+	public void setSpeedMult(float speedMult) {
+		this.speedMult = speedMult;
+	}
+	
+	
 
 }

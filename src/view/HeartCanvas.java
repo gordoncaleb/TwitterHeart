@@ -3,16 +3,21 @@ package view;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.DisplayMode;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsDevice;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
@@ -28,7 +33,7 @@ import javax.swing.Timer;
 
 import model.TwitterFeed;
 
-public class HeartCanvas extends JLabel implements ActionListener, ComponentListener {
+public class HeartCanvas extends JLabel implements ActionListener, ComponentListener, KeyEventDispatcher {
 
 	public static int vShift = 50;
 
@@ -47,6 +52,12 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 
 	private Timer timer;
 
+	BannerEditor editor;
+
+	private JFrame owner;
+	private DisplayMode oldMode;
+	private boolean fullscreen = false;
+
 	private Thread anamationThread;
 
 	private long time;
@@ -55,6 +66,13 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 	private Timer fpsCounter;
 
 	public HeartCanvas() {
+		owner = new JFrame();
+		owner.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		owner.setLayout(new BorderLayout());
+
+		owner.add(this, BorderLayout.CENTER);
+
+		oldMode = owner.getGraphicsConfiguration().getDevice().getDisplayMode();
 
 		tf = new TwitterFeed();
 
@@ -77,11 +95,20 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 		//
 		// anamationThread.start();
 
+		KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		manager.addKeyEventDispatcher(this);
+
 		timer = new Timer(10, this);
 		timer.start();
 
 		fpsCounter = new Timer(1000, this);
 		fpsCounter.start();
+
+		owner.setSize(500, 500);
+
+		owner.setVisible(true);
+
+		editor = new BannerEditor(owner, this);
 
 	}
 
@@ -93,6 +120,9 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 		}
 
 		double h = this.getHeight() * 0.08;
+
+		BannerEditor.maxRowHeight = h;
+
 		ArrayList<Integer> rowHeights = new ArrayList<Integer>();
 
 		int totH = (resizedDecalImage.getHeight() - vShift * 2);
@@ -129,69 +159,16 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 		}
 
 		for (FeedBanner banner : banners) {
-			banner.setSpeed((float) Math.max(Math.random() * 0.001 * (double) this.getWidth(), (double) this.getWidth() * 0.0004));
+			banner.setSpeed((float) Math.max(Math.random() * 50, 10));
 		}
 	}
 
+	public Vector<FeedBanner> getFeedBanners() {
+		return banners;
+	}
+
 	public static void main(String[] args) {
-		JFrame frame = new JFrame();
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setLayout(new BorderLayout());
-
-		final HeartCanvas canvas = new HeartCanvas();
-
-		frame.add(canvas, BorderLayout.CENTER);
-
-		JButton paint = new JButton("paint");
-
-		paint.addMouseListener(new MouseListener() {
-
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mouseExited(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mousePressed(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent arg0) {
-				canvas.repaint();
-
-			}
-
-		});
-
-		// frame.add(paint, BorderLayout.SOUTH);
-
-		// frame.pack();
-
-		frame.setUndecorated(true);
-
-		// frame.setSize(500, 500);
-
-		frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-
-		frame.setVisible(true);
-
-		// frame.setResizable(false);
-
+		new HeartCanvas();
 	}
 
 	public void paintComponent(Graphics g) {
@@ -211,12 +188,9 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 		// g2.setColor(Color.WHITE);
 		// g2.fillRect(0, 0, this.getWidth(), this.getHeight());
 
-		int[] rand = randomOrder(yPos.length);
-		FeedBanner banner;
-
-		for (int i = 0; i < yPos.length; i++) {
-			banner = banners.get(rand[i]);
-			banner.drawOnCanvas(g2, yPos[rand[i]]);
+		int pos = vShift;
+		for (FeedBanner banner : banners) {
+			pos += banner.drawOnCanvas(g2, pos);
 		}
 
 		// synchronized (textImage) {
@@ -340,6 +314,10 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 
 		initBanners();
 
+		if (editor != null) {
+			editor.build();
+		}
+
 		// synchronized (textImage) {
 		// textImage = new BufferedImage(resizedDecalImage.getWidth(),
 		// resizedDecalImage.getHeight(), BufferedImage.TYPE_4BYTE_ABGR);
@@ -351,6 +329,68 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 		// TODO Auto-generated method stub
 
 	}
+
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent e) {
+		if (e.getID() == KeyEvent.KEY_PRESSED) {
+
+		} else {
+			if (e.getID() == KeyEvent.KEY_RELEASED) {
+				// System.out.println("Pressed :" + e.getKeyCode());
+
+				if (e.getKeyCode() == KeyEvent.VK_F11) {
+
+					fullscreen = !fullscreen;
+
+					GraphicsDevice device = owner.getGraphicsConfiguration().getDevice();
+
+					if (!fullscreen) {
+
+						device.setDisplayMode(oldMode);
+
+						owner.setVisible(false);
+
+						owner.dispose();
+
+						owner.setUndecorated(false);
+
+						device.setFullScreenWindow(null);
+
+						owner.setSize(500, 500);
+
+						owner.setLocationRelativeTo(null);
+
+						owner.setVisible(true);
+
+					} else {
+
+						owner.setVisible(false);
+						owner.dispose();
+						owner.setUndecorated(true);
+						device.setFullScreenWindow(owner);
+						// device.setDisplayMode(dm)
+
+						owner.setVisible(true);
+					}
+				}
+			} else {
+				if (e.getID() == KeyEvent.KEY_TYPED) {
+
+				}
+			}
+		}
+		return false;
+	}
+
+	public TwitterFeed getTf() {
+		return tf;
+	}
+
+	public void setTf(TwitterFeed tf) {
+		this.tf = tf;
+	}
+	
+	
 
 	// @Override
 	// public void run() {
