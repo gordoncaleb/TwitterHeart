@@ -108,7 +108,7 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 
 		owner.setVisible(true);
 
-		editor = new BannerEditor(owner, this);
+		editor = new BannerEditor(this);
 
 	}
 
@@ -389,8 +389,6 @@ public class HeartCanvas extends JLabel implements ActionListener, ComponentList
 	public void setTf(TwitterFeed tf) {
 		this.tf = tf;
 	}
-	
-	
 
 	// @Override
 	// public void run() {

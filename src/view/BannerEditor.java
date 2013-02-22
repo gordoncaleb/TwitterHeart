@@ -22,7 +22,7 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-public class BannerEditor extends javax.swing.JDialog {
+public class BannerEditor extends JFrame {
 
 	public static double maxRowHeight = 32.0;
 
@@ -30,9 +30,9 @@ public class BannerEditor extends javax.swing.JDialog {
 
 	public JPanel panel = new JPanel(new GridLayout(0, 3));
 
-	public BannerEditor(JFrame owner, final HeartCanvas canvas) {
-		super(owner, false);
-
+	public BannerEditor(final HeartCanvas canvas) {
+		// super(owner, false);
+		super();
 		this.setLayout(new BorderLayout());
 
 		this.canvas = canvas;
